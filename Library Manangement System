@@ -1,0 +1,303 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <iomanip>
+#include <limits> // for cin.ignore() fix
+using namespace std;
+
+//======================= STRUCT =======================//
+struct Date {
+    int day, month, year;
+};
+
+//======================= CLASS DEFINITIONS =======================//
+class Book {
+private:
+    int id;
+    string title, author;
+    float price;
+    bool isIssued;
+
+public:
+    // Default constructor
+    Book() : id(0), title(""), author(""), price(0.0), isIssued(false) {}
+
+    // Parameterized constructor
+    Book(int id, string title, string author, float price) {
+        this->id = id;
+        this->title = title;
+        this->author = author;
+        this->price = price;
+        this->isIssued = false;
+    }
+
+    // Copy constructor
+    Book(const Book &b) {
+        id = b.id;
+        title = b.title;
+        author = b.author;
+        price = b.price;
+        isIssued = b.isIssued;
+    }
+
+    // Destructor
+    ~Book() {}
+
+    // Function Overloading
+    void setData(int i, string t, string a, float p) {
+        id = i;
+        title = t;
+        author = a;
+        price = p;
+    }
+
+    void setData() {
+        cout << "Enter ID: ";
+        cin >> id;
+        cin.ignore(numeric_limits<streamsize>::max(), '\n'); // clear input buffer
+        cout << "Enter Title: ";
+        getline(cin, title);
+        cout << "Enter Author: ";
+        getline(cin, author);
+        cout << "Enter Price: ";
+        cin >> price;
+        isIssued = false;
+    }
+
+    void display() const {
+        cout << setw(5) << id << setw(25) << title << setw(20)
+             << author << setw(10) << price << setw(12)
+             << (isIssued ? "Issued" : "Available") << endl;
+    }
+
+    // Friend functions
+    friend void issueBook(Book &b);
+    friend void returnBook(Book &b);
+
+    // Getters
+    int getId() const { return id; }
+    bool getStatus() const { return isIssued; }
+
+    // File Handling
+    void saveToFile(ofstream &out) const {
+        out << id << "," << title << "," << author << "," << price << "," << isIssued << endl;
+    }
+
+    static void displayHeader() {
+        cout << setw(5) << "ID" << setw(25) << "Title" << setw(20)
+             << "Author" << setw(10) << "Price" << setw(12) << "Status" << endl;
+        cout << string(75, '-') << endl;
+    }
+};
+
+// Friend Function Implementation
+void issueBook(Book &b) {
+    if (!b.isIssued) {
+        b.isIssued = true;
+        cout << "✅ Book issued successfully!" << endl;
+    } else
+        cout << "⚠️ Book already issued!" << endl;
+}
+
+void returnBook(Book &b) {
+    if (b.isIssued) {
+        b.isIssued = false;
+        cout << "✅ Book returned successfully!" << endl;
+    } else
+        cout << "⚠️ Book was not issued!" << endl;
+}
+
+//======================= INHERITANCE =======================//
+class Member {
+protected:
+    int memberId;
+    string name;
+
+public:
+    Member(int id = 0, string n = "") : memberId(id), name(n) {}
+    virtual void displayInfo() const {
+        cout << "Member ID: " << memberId << ", Name: " << name << endl;
+    }
+};
+
+class Student : public Member {
+private:
+    string course;
+
+public:
+    Student(int id, string n, string c) : Member(id, n), course(c) {}
+    void displayInfo() const override {
+        cout << "👨‍🎓 Student ID: " << memberId << ", Name: " << name
+             << ", Course: " << course << endl;
+    }
+};
+
+class Faculty : public Member {
+private:
+    string department;
+
+public:
+    Faculty(int id, string n, string d) : Member(id, n), department(d) {}
+    void displayInfo() const override {
+        cout << "👩‍🏫 Faculty ID: " << memberId << ", Name: " << name
+             << ", Department: " << department << endl;
+    }
+};
+
+//======================= TEMPLATE =======================//
+template <class T>
+void displayVector(vector<T> &v) {
+    for (auto &item : v)
+        item.display();
+}
+
+//======================= OPERATOR OVERLOADING =======================//
+class Counter {
+private:
+    int count;
+
+public:
+    Counter() : count(0) {}
+    Counter operator++(int) {
+        Counter temp = *this;
+        count++;
+        return temp;
+    }
+    void displayCount() const { cout << "\n📚 Total Transactions: " << count << endl; }
+};
+
+//======================= EXCEPTION HANDLING =======================//
+void validatePrice(float price) {
+    if (price < 0)
+        throw invalid_argument("❌ Price cannot be negative!");
+}
+
+//======================= MAIN FUNCTION =======================//
+int main() {
+    vector<Book> books;
+    Counter transactionCounter;
+    int choice;
+
+    do {
+        cout << "\n\n===== 📖 Library Management System =====";
+        cout << "\n1. Add Book";
+        cout << "\n2. Display All Books";
+        cout << "\n3. Issue Book";
+        cout << "\n4. Return Book";
+        cout << "\n5. Save Books to File";
+        cout << "\n6. Demonstrate Inheritance";
+        cout << "\n7. Exit";
+        cout << "\nEnter your choice: ";
+        cin >> choice;
+
+        if (cin.fail()) { // to prevent infinite loop on invalid input
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "⚠️ Invalid input! Please enter a valid number.\n";
+            continue;
+        }
+
+        switch (choice) {
+        case 1: {
+            try {
+                int id;
+                string title, author;
+                float price;
+
+                cout << "Enter Book ID: ";
+                cin >> id;
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                cout << "Enter Title: ";
+                getline(cin, title);
+                cout << "Enter Author: ";
+                getline(cin, author);
+                cout << "Enter Price: ";
+                cin >> price;
+
+                validatePrice(price);
+
+                Book b(id, title, author, price);
+                books.push_back(b);
+                cout << "✅ Book added successfully!" << endl;
+            } catch (invalid_argument &e) {
+                cout << e.what() << endl;
+            }
+            break;
+        }
+
+        case 2:
+            if (books.empty()) {
+                cout << "⚠️ No books available!" << endl;
+            } else {
+                Book::displayHeader();
+                displayVector(books);
+            }
+            break;
+
+        case 3: {
+            int id;
+            cout << "Enter Book ID to issue: ";
+            cin >> id;
+            bool found = false;
+            for (auto &b : books) {
+                if (b.getId() == id) {
+                    issueBook(b);
+                    transactionCounter++;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+                cout << "⚠️ Book not found!" << endl;
+            break;
+        }
+
+        case 4: {
+            int id;
+            cout << "Enter Book ID to return: ";
+            cin >> id;
+            bool found = false;
+            for (auto &b : books) {
+                if (b.getId() == id) {
+                    returnBook(b);
+                    transactionCounter++;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+                cout << "⚠️ Book not found!" << endl;
+            break;
+        }
+
+        case 5: {
+            ofstream file("library_records.txt");
+            for (auto &b : books)
+                b.saveToFile(file);
+            file.close();
+            cout << "💾 Data saved to file successfully!" << endl;
+            break;
+        }
+
+        case 6: {
+            Student s1(101, "Chirag Gupta", "CSE");
+            Faculty f1(201, "Dr. Mehta", "Computer Science");
+            s1.displayInfo();
+            f1.displayInfo();
+            break;
+        }
+
+        case 7:
+            cout << "\nExiting... Thank you! 👋\n";
+            transactionCounter.displayCount();
+            break;
+
+        default:
+            cout << "⚠️ Invalid choice! Try again.\n";
+        }
+
+    } while (choice != 7);
+
+    return 0;
+}
